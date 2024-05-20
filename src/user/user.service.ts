@@ -28,7 +28,7 @@ export class UserService {
     });
   }
 
-  async update(id: number, payload: Partial<User>): Promise<User> {
+  async update(id: string, payload: Partial<User>): Promise<User> {
     // Find the user entity by ID using Prisma
     const entity = await this.prisma.users.findUnique({
       where: { id },

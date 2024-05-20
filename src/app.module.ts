@@ -3,9 +3,11 @@ import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { PrismaService } from './prisma/prisma.service';
 import { PrismaModule } from './prisma/prisma.module';
+import { TelegramModule } from './telegram/telegram.module';
+import { ExchangeModule } from './exchange/exchange.module';
 
 @Module({
-  imports: [AuthModule, UserModule, PrismaModule],
+  imports: [AuthModule, UserModule, PrismaModule, TelegramModule, ExchangeModule],
   providers: [PrismaService],
 })
 export class AppModule {}

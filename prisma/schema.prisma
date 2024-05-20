@@ -14,7 +14,7 @@ datasource db {
 }
 
 model Users {
-  id               Int             @id @default(autoincrement())
+  id               String          @id @default(uuid())
   email            String          @unique
   password         String?
   previousPassword String?
@@ -39,7 +39,7 @@ model Robots {
   id           Int       @id @default(autoincrement())
   name         String
   user         Users     @relation(fields: [usersId], references: [id])
-  usersId      Int
+  usersId      String
   createdAt    DateTime? @default(now())
   startedAt    DateTime? @updatedAt
   canceledAt   DateTime?
@@ -61,7 +61,7 @@ model UserExchanges {
   id         Int       @id @default(autoincrement())
   name       String
   user       Users     @relation(fields: [userId], references: [id])
-  userId     Int
+  userId     String
   exchange   Exchange  @relation(fields: [exchangeId], references: [id])
   exchangeId String
   apiKey     String
@@ -74,7 +74,7 @@ model Algorithm {
   id             Int       @id @default(autoincrement())
   algorithmName  String
   user           Users     @relation(fields: [usersId], references: [id])
-  usersId        Int
+  usersId        String
   exchange       Exchange  @relation(fields: [exchangeId], references: [id])
   exchangeId     String
   algorithm      String
@@ -92,7 +92,7 @@ model UserTelegram {
   profilePhoto String?
   session      String    @default("")
   user         Users     @relation(fields: [usersId], references: [id])
-  usersId      Int
+  usersId      String
   createdAt    DateTime? @default(now())
   updatedAt    DateTime? @updatedAt
 }
