@@ -1,0 +1,98 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Users {
+  id               Int             @id @default(autoincrement())
+  email            String          @unique
+  password         String?
+  previousPassword String?
+  provider         String?
+  socialId         String?
+  firstName        String?
+  lastName         String?
+  photo            String?
+  role             String?
+  status           String?
+  createdAt        DateTime?       @default(now())
+  updatedAt        DateTime?       @updatedAt
+  deletedAt        DateTime?
+  refreshToken     String?
+  userExchanges    UserExchanges[]
+  UserTelegram     UserTelegram[]
+  Algorithm        Algorithm[]
+  Robots           Robots[]
+}
+
+model Robots {
+  id           Int       @id @default(autoincrement())
+  name         String
+  user         Users     @relation(fields: [usersId], references: [id])
+  usersId      Int
+  createdAt    DateTime? @default(now())
+  startedAt    DateTime? @updatedAt
+  canceledAt   DateTime?
+  cancelReason String?
+}
+
+model Exchange {
+  id               String          @id
+  name             String
+  year_established Int
+  country          String?
+  description      String?
+  image            String
+  userExchanges    UserExchanges[]
+  Algorithm        Algorithm[]
+}
+
+model UserExchanges {
+  id         Int       @id @default(autoincrement())
+  name       String
+  user       Users     @relation(fields: [userId], references: [id])
+  userId     Int
+  exchange   Exchange  @relation(fields: [exchangeId], references: [id])
+  exchangeId String
+  apiKey     String
+  apiSecret  String
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+}
+
+model Algorithm {
+  id             Int       @id @default(autoincrement())
+  algorithmName  String
+  user           Users     @relation(fields: [usersId], references: [id])
+  usersId        Int
+  exchange       Exchange  @relation(fields: [exchangeId], references: [id])
+  exchangeId     String
+  algorithm      String
+  channelId      String
+  purchaseVolume String
+  purchaseType   String
+  createdAt      DateTime? @default(now())
+  updatedAt      DateTime? @updatedAt
+}
+
+model UserTelegram {
+  id           Int       @id @default(autoincrement())
+  telegramId   BigInt
+  username     String?
+  profilePhoto String?
+  session      String    @default("")
+  user         Users     @relation(fields: [usersId], references: [id])
+  usersId      Int
+  createdAt    DateTime? @default(now())
+  updatedAt    DateTime? @updatedAt
+}
