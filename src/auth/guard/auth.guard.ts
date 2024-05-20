@@ -1,3 +1,4 @@
+import { AuthHelpers } from './../helpers/auth-helpers';
 import {
   CanActivate,
   ExecutionContext,
@@ -5,11 +6,10 @@ import {
   UnauthorizedException,
   ForbiddenException,
 } from '@nestjs/common';
-import { AuthService } from '../auth.service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authHelpers: AuthHelpers) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     try {
@@ -19,7 +19,7 @@ export class AuthGuard implements CanActivate {
         throw new UnauthorizedException('Please provide token');
       }
       const authToken = authorization.replace(/bearer/gim, '').trim();
-      const resp = await this.authService.validateAccessToken(authToken);
+      const resp = this.authHelpers.validateAccessToken(authToken);
       request.user = resp;
       return true;
     } catch (error) {

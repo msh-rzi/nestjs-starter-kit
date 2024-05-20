@@ -1,6 +1,4 @@
 import { Exclude } from 'class-transformer';
-import { CreateUserDto } from '../dto/create-user.dto';
-import { UserMapper } from '../mappers/user.mapper';
 
 export class User {
   id: number;

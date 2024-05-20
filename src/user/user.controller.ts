@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UserMapper } from './mappers/user.mapper';
@@ -12,7 +12,6 @@ import { ApiTags } from '@nestjs/swagger';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @Post()
   create(@Body() createUserDto: CreateUserDto) {
     const data = UserMapper.createUserToDomain(createUserDto);
     return this.userService.create(data);
