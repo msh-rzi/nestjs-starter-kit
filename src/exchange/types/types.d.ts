@@ -1,0 +1,9 @@
+type BybitOrderCategory = 'inverse' | 'linear' | 'option' | 'spot';
+type BybitOrderSide = 'Buy' | 'Sell';
+type BybitOrderOrderType = 'Market' | 'Limit';
+type BybitOrderTpslMode = 'Full' | 'Partial';
+type BybitOrderIsLeverage = 0 | 1;
+type BybitOrderTpTriggerBy = 'LastPrice' | 'IndexPrice' | 'MarkPrice';
+type BybitOrderSlTriggerBy = 'LastPrice' | 'IndexPrice' | 'MarkPrice';
+type BybitOrderFilter = 'tpslOrder' | 'Order' | 'StopOrder';
+type BybitPositionIdx = 0 | 1 | 2;

@@ -1,8 +1,13 @@
 import { Injectable } from '@nestjs/common';
+// dto
 import { AddExchangeDto } from '../dto/add-exchange.dto';
+// service
 import { PrismaService } from 'src/prisma/prisma.service';
+// stuff
 import { globalResponse } from 'src/utils/globalResponse';
+// types
 import { GlobalResponseType, ResponseCode, ResponseMessage } from 'src/types';
+import { Exchange } from '@prisma/client';
 
 @Injectable()
 export class ExchangeBaseRepository {
@@ -62,6 +67,32 @@ export class ExchangeBaseRepository {
     }
   }
 
+  async getAllExchanges(): Promise<GlobalResponseType> {
+    try {
+      const exchanges = await this.prisma.exchange.findMany({
+        select: {
+          id: true,
+          name: true,
+          image: true,
+        },
+      });
+      return globalResponse({
+        retCode: ResponseCode.INTERNAL_SERVER_ERROR,
+        regMsg: ResponseMessage.ERROR,
+        result: { exchanges },
+        retExtInfo: 'Internal server error',
+      });
+    } catch (error) {
+      console.log(error);
+      return globalResponse({
+        retCode: ResponseCode.INTERNAL_SERVER_ERROR,
+        regMsg: ResponseMessage.ERROR,
+        result: { error },
+        retExtInfo: 'Internal server error',
+      });
+    }
+  }
+
   async addUserExchange(
     userId: string,
     apiKey: string,
@@ -78,6 +109,8 @@ export class ExchangeBaseRepository {
       });
     }
 
+    const x = await this.getAllExchanges();
+
     await this.prisma.userExchanges.create({
       data: {
         exchangeId,
@@ -93,5 +126,32 @@ export class ExchangeBaseRepository {
       result: {},
       retExtInfo: '',
     });
+  }
+
+  async userExchange(userId: string) {
+    try {
+      const exchanges = await this.prisma.userExchanges.findMany({
+        where: { userId },
+        select: {
+          apiKey: true,
+          apiSecret: true,
+          exchangeId: true,
+        },
+      });
+      return globalResponse({
+        retCode: ResponseCode.ACCEPTED,
+        regMsg: ResponseMessage.OK,
+        result: { exchanges },
+        retExtInfo: '',
+      });
+    } catch (error) {
+      console.log(error);
+      return globalResponse({
+        retCode: ResponseCode.INTERNAL_SERVER_ERROR,
+        regMsg: ResponseMessage.ERROR,
+        result: { error },
+        retExtInfo: 'Internal server error',
+      });
+    }
   }
 }

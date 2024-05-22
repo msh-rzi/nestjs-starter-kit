@@ -3,6 +3,8 @@ import { TelegramController } from './telegram.controller';
 import { TelegramAuthRepository } from './repositories/telegram.auth.repository';
 import { TelegramChannelsRepository } from './repositories/telegram.channel.repository';
 import { TelegramEventRepository } from './repositories/telegram.event.repository';
+import { AiChatGPTRepository } from 'src/ai/repositories/ai.chatgpt.repository';
+import { ExchangeBybitRepository } from 'src/exchange/repositories/exchange.bybit.repository';
 
 @Module({
   controllers: [TelegramController],
@@ -10,6 +12,8 @@ import { TelegramEventRepository } from './repositories/telegram.event.repositor
     TelegramEventRepository,
     TelegramAuthRepository,
     TelegramChannelsRepository,
+    AiChatGPTRepository,
+    ExchangeBybitRepository,
   ],
   exports: [
     TelegramEventRepository,

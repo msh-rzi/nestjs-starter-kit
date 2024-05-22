@@ -2,15 +2,19 @@ import { Injectable } from '@nestjs/common';
 // services
 import { PrismaService } from 'src/prisma/prisma.service';
 import { TelegramAuthRepository } from './telegram.auth.repository';
+import { AiChatGPTRepository } from 'src/ai/repositories/ai.chatgpt.repository';
 // telegram
 import { NewMessage, NewMessageEvent } from 'telegram/events';
-import { extractTradeDetails } from '../utils/extractTradeDetail';
+import { extractTradeDetailFromGPTResponse } from '../utils/extractTradeDetail';
+import { ExchangeBybitRepository } from 'src/exchange/repositories/exchange.bybit.repository';
 
 @Injectable()
 export class TelegramEventRepository {
   constructor(
     private readonly prisma: PrismaService,
     private readonly authRepo: TelegramAuthRepository,
+    private readonly chatgpt: AiChatGPTRepository,
+    private readonly bybit: ExchangeBybitRepository,
   ) {}
 
   async startListening(usersId: string) {
@@ -47,6 +51,8 @@ export class TelegramEventRepository {
         },
       });
 
+      const bybitExchange = userExchanges.find((e) => e.exchangeId === 'bybit');
+
       if (!userExchanges.length) {
         console.log('not exchange');
         return { started: false };
@@ -70,8 +76,21 @@ export class TelegramEventRepository {
           const message = event.message.message;
           console.log({ message });
 
-          const extractedValues = extractTradeDetails(message);
-          console.log({ extractedValues });
+          const gptResponse = await this.chatgpt.generateCompletion(
+            message,
+            true,
+          );
+
+          const tradeRawDataArray =
+            extractTradeDetailFromGPTResponse(gptResponse);
+          if (!tradeRawDataArray.length) {
+            console.log('this is not signal');
+            return;
+          }
+
+          tradeRawDataArray.forEach((rawData) => {
+            this.bybit.createOrder(usersId, bybitExchange.exchangeId, rawData);
+          });
         } catch (error) {
           console.error('Error handling new message:', error);
         }
