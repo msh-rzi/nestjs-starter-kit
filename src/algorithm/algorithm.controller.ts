@@ -14,7 +14,7 @@ import { AddAlgorithmDto } from './dto/add-algorithm-dto';
 import { AuthGuard } from 'src/auth/guard/auth.guard';
 import { ReqType } from 'src/telegram/types/types';
 
-@ApiTags('algorithm')
+@ApiTags('Algorithms')
 @Controller({
   path: 'algorithm',
   version: '1',

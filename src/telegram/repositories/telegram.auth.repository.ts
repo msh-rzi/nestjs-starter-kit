@@ -8,7 +8,8 @@ import { TelegramClient } from 'telegram';
 import { TelegramHelpers } from '../helpers/telegram.helpers';
 import { PrismaService } from 'src/prisma/prisma.service';
 // types
-import { GlobalResponseType, ResponseCode, ResponseMessage } from 'src/types';
+import { ResponseCode, ResponseMessage } from 'src/types/globalEnums';
+import { GlobalResponseType } from 'src/types/globalTypes';
 import { initTelegramClientParams } from '../types/types';
 
 @Injectable()

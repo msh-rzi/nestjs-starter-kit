@@ -1,11 +1,11 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import { LoginByEmailDto, RegisterByEmailDto } from './dto';
 import { AuthHelpers } from './helpers/auth-helpers';
 import { UserMapper } from 'src/user/mappers/user.mapper';
 import { globalResponse } from 'src/utils/globalResponse';
 import { ResponseCode, ResponseMessage } from 'src/types/globalEnums';
-import { GlobalResponseType } from 'src/types';
+import { GlobalResponseType } from 'src/types/globalTypes';
 
 @Injectable()
 export class AuthService {

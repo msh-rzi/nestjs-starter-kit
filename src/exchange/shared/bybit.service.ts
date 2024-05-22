@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { RestClientV5 } from 'bybit-api';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { GlobalResponseType, ResponseCode, ResponseMessage } from 'src/types';
+import { ResponseCode, ResponseMessage } from 'src/types/globalEnums';
+import { GlobalResponseType } from 'src/types/globalTypes';
 import { globalResponse } from 'src/utils/globalResponse';
 
 @Injectable()

@@ -20,7 +20,7 @@ import { ReqType } from './types/types';
 // dto
 import { ChannelHistoryDto, SendCodeDto, SignInDto } from './dto';
 
-@ApiTags('telegram')
+@ApiTags('Telegram Bots')
 @Controller({
   path: 'telegram',
   version: '1',

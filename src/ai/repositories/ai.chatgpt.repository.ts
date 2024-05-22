@@ -1,6 +1,6 @@
 import { ConfigService } from '@nestjs/config';
-import { OpenAI } from './../../../node_modules/openai/src/index';
 import { Injectable } from '@nestjs/common';
+import OpenAI from 'openai';
 
 @Injectable()
 export class AiChatGPTRepository {

@@ -6,8 +6,8 @@ import { PrismaService } from 'src/prisma/prisma.service';
 // stuff
 import { globalResponse } from 'src/utils/globalResponse';
 // types
-import { GlobalResponseType, ResponseCode, ResponseMessage } from 'src/types';
-import { Exchange } from '@prisma/client';
+import { ResponseCode, ResponseMessage } from 'src/types/globalEnums';
+import { GlobalResponseType } from 'src/types/globalTypes';
 
 @Injectable()
 export class ExchangeBaseRepository {

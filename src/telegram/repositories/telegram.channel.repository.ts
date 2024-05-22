@@ -5,7 +5,7 @@ import { TelegramAuthRepository } from './telegram.auth.repository';
 import { globalResponse } from 'src/utils/globalResponse';
 // types
 import { GlobalResponseType } from 'src/types/globalTypes';
-import { ResponseCode, ResponseMessage } from 'src/types';
+import { ResponseCode, ResponseMessage } from 'src/types/globalEnums';
 // telegram
 import { Api } from 'telegram';
 

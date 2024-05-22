@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AddAlgorithmDto } from './dto/add-algorithm-dto';
 import { globalResponse } from 'src/utils/globalResponse';
-import { ResponseCode, ResponseMessage } from 'src/types';
+import { ResponseCode, ResponseMessage } from 'src/types/globalEnums';
 
 @Injectable()
 export class AlgorithmService {

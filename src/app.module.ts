@@ -7,9 +7,23 @@ import { TelegramModule } from './telegram/telegram.module';
 import { ExchangeModule } from './exchange/exchange.module';
 import { AiModule } from './ai/ai.module';
 import { AlgorithmModule } from './algorithm/algorithm.module';
+import { ConfigModule } from '@nestjs/config';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
-  imports: [AuthModule, UserModule, PrismaModule, TelegramModule, ExchangeModule, AiModule, AlgorithmModule],
-  providers: [PrismaService],
+  imports: [
+    JwtModule.register({}),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: ['.env'],
+    }),
+    AuthModule,
+    UserModule,
+    PrismaModule,
+    TelegramModule,
+    ExchangeModule,
+    AiModule,
+    AlgorithmModule,
+  ],
 })
 export class AppModule {}

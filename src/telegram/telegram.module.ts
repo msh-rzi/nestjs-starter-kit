@@ -3,17 +3,20 @@ import { TelegramController } from './telegram.controller';
 import { TelegramAuthRepository } from './repositories/telegram.auth.repository';
 import { TelegramChannelsRepository } from './repositories/telegram.channel.repository';
 import { TelegramEventRepository } from './repositories/telegram.event.repository';
-import { AiChatGPTRepository } from 'src/ai/repositories/ai.chatgpt.repository';
-import { ExchangeBybitRepository } from 'src/exchange/repositories/exchange.bybit.repository';
+import { ExchangeModule } from 'src/exchange/exchange.module';
+import { PrismaModule } from 'src/prisma/prisma.module';
+import { TelegramHelpers } from './helpers/telegram.helpers';
+import { AiModule } from 'src/ai/ai.module';
+import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
+  imports: [ExchangeModule, PrismaModule, AiModule, AuthModule],
   controllers: [TelegramController],
   providers: [
     TelegramEventRepository,
     TelegramAuthRepository,
     TelegramChannelsRepository,
-    AiChatGPTRepository,
-    ExchangeBybitRepository,
+    TelegramHelpers,
   ],
   exports: [
     TelegramEventRepository,
