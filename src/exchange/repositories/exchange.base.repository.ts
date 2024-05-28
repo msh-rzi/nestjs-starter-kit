@@ -37,6 +37,7 @@ export class ExchangeBaseRepository {
 
   async getExchangeById(exchangeId: string): Promise<GlobalResponseType> {
     try {
+      console.log('here');
       const exchange = await this.prisma.exchange.findUnique({
         where: { id: exchangeId },
       });
@@ -76,11 +77,12 @@ export class ExchangeBaseRepository {
           image: true,
         },
       });
+      console.log({ exchanges });
       return globalResponse({
-        retCode: ResponseCode.INTERNAL_SERVER_ERROR,
-        regMsg: ResponseMessage.ERROR,
+        retCode: ResponseCode.OK,
+        regMsg: ResponseMessage.OK,
         result: { exchanges },
-        retExtInfo: 'Internal server error',
+        retExtInfo: '',
       });
     } catch (error) {
       console.log(error);
@@ -100,6 +102,7 @@ export class ExchangeBaseRepository {
     exchangeId: string,
   ): Promise<GlobalResponseType> {
     const targetExchangeData = await this.getExchangeById(exchangeId);
+    console.log('first');
     if (!targetExchangeData.result.exchange.id) {
       return globalResponse({
         retCode: ResponseCode.BAD_REQUEST,
@@ -108,8 +111,6 @@ export class ExchangeBaseRepository {
         retExtInfo: 'Exchange does not exist',
       });
     }
-
-    const x = await this.getAllExchanges();
 
     await this.prisma.userExchanges.create({
       data: {
@@ -133,8 +134,6 @@ export class ExchangeBaseRepository {
       const exchanges = await this.prisma.userExchanges.findMany({
         where: { userId },
         select: {
-          apiKey: true,
-          apiSecret: true,
           exchangeId: true,
         },
       });

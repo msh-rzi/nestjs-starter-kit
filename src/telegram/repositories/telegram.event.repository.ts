@@ -7,6 +7,9 @@ import { AiChatGPTRepository } from 'src/ai/repositories/ai.chatgpt.repository';
 import { NewMessage, NewMessageEvent } from 'telegram/events';
 import { extractTradeDetailFromGPTResponse } from '../utils/extractTradeDetail';
 import { ExchangeBybitRepository } from 'src/exchange/repositories/exchange.bybit.repository';
+import { AlgorithmService } from 'src/algorithm/algorithm.service';
+import { RobotTelegramTradeAutomationRepository } from 'src/robot/repositories/robot.telegram.trade.automation.repository';
+import { RobotBaseRepository } from 'src/robot/repositories/robot.base.repository';
 
 @Injectable()
 export class TelegramEventRepository {
@@ -15,89 +18,112 @@ export class TelegramEventRepository {
     private readonly authRepo: TelegramAuthRepository,
     private readonly chatgpt: AiChatGPTRepository,
     private readonly bybit: ExchangeBybitRepository,
-  ) {}
+    private readonly algorithmService: AlgorithmService,
+    private readonly telegramTradeAutomation: RobotTelegramTradeAutomationRepository,
+    private readonly robotService: RobotBaseRepository,
+  ) {
+    this.robotService.getAllUsersRobots().then(async (usersRobots) => {
+      usersRobots.forEach((userRobot) => {
+        if (userRobot.active) this.startListening(userRobot.usersId);
+      });
+    });
+  }
 
   async startListening(usersId: string) {
     try {
+      // Get user session and initialize Telegram client
       const session = await this.authRepo.getUserSession(usersId);
-      const client = await this.authRepo.initTelegramClient({ session });
+      const client = await this.authRepo.initTelegramClient(usersId, session);
 
-      const isUserHasData = await this.prisma.robots.findFirst({
-        where: {
-          name: 'Telegram Trade Automation',
-          usersId,
-        },
-      });
-
-      if (isUserHasData) {
-        await this.prisma.robots.update({
-          where: { id: isUserHasData.id },
-          data: {
-            startedAt: new Date(),
-          },
-        });
-      } else {
-        await this.prisma.robots.create({
-          data: {
-            name: 'Telegram Trade Automation',
-            usersId,
-          },
-        });
-      }
-
-      const userExchanges = await this.prisma.userExchanges.findMany({
+      // Fetch user exchanges and find Bybit exchange
+      const userExchanges = await this.prisma.userExchanges.findFirst({
         where: {
           userId: usersId,
+          exchangeId: 'bybit',
         },
       });
 
-      const bybitExchange = userExchanges.find((e) => e.exchangeId === 'bybit');
-
-      if (!userExchanges.length) {
-        console.log('not exchange');
+      // If no exchanges found, return
+      if (!userExchanges) {
+        console.log('No exchanges found for the user.');
         return { started: false };
       }
 
-      // const userAlgorithms = await this.prisma.algorithm.findMany({
-      //   where: {
-      //     usersId,
-      //   },
-      //   orderBy: {
-      //     id: 'desc',
-      //   },
-      // });
+      // Fetch user algorithms for Bybit exchange
+      const userAlgorithmsList =
+        await this.algorithmService.getUserAlgorithmsByExchangeId(
+          usersId,
+          'bybit',
+        );
+      if (!userAlgorithmsList) {
+        console.log('No algorithms found for the user.');
+        return { started: false };
+      }
+      const { userAlgorithms } = userAlgorithmsList.result;
 
-      // console.log({ userAlgorithms });
-      // const lastAlgorithm = userAlgorithms[0];
+      // Start listening for new messages
+      const started = await new Promise((resolve) => {
+        client.addEventHandler(async (event: NewMessageEvent) => {
+          try {
+            resolve(true);
+            const channelId = event.chatId;
+            // Check if the channel has associated algorithm
+            const relatedChannelWithAlgorithm = userAlgorithms.find(
+              (al) => al.channelId === channelId.toString(),
+            );
 
-      client.addEventHandler(async (event: NewMessageEvent) => {
-        try {
-          console.log('==================================');
-          const message = event.message.message;
-          console.log({ message });
+            if (!relatedChannelWithAlgorithm) {
+              // console.log(
+              //   'No related channel with algorithm found for channelId:',
+              //   channelId,
+              // );
+              return;
+            }
 
-          const gptResponse = await this.chatgpt.generateCompletion(
-            message,
-            true,
-          );
+            const message = event.message.message;
+            console.log('Received message:', message);
 
-          const tradeRawDataArray =
-            extractTradeDetailFromGPTResponse(gptResponse);
-          if (!tradeRawDataArray.length) {
-            console.log('this is not signal');
-            return;
+            // Generate completion using ChatGPT
+            const gptResponse = await this.chatgpt.generateCompletion(
+              message,
+              true,
+            );
+
+            // Extract trade details from GPT response
+            const tradeRawDataArray =
+              extractTradeDetailFromGPTResponse(gptResponse);
+
+            console.log(
+              `Extract trade details from GPT response ${tradeRawDataArray}`,
+            );
+
+            // If no trade data found, return
+            if (!tradeRawDataArray.length) {
+              console.log('No trade data found in the message.');
+              return;
+            }
+
+            // Create order for each trade data
+            tradeRawDataArray.forEach((rawData) => {
+              console.log('Creating order with data:', rawData);
+              this.bybit.createOrder(
+                usersId,
+                userExchanges.exchangeId,
+                rawData,
+              );
+            });
+          } catch (error) {
+            console.error('Error handling new message:', error);
           }
+        }, new NewMessage({}));
+      });
 
-          tradeRawDataArray.forEach((rawData) => {
-            this.bybit.createOrder(usersId, bybitExchange.exchangeId, rawData);
-          });
-        } catch (error) {
-          console.error('Error handling new message:', error);
-        }
-      }, new NewMessage({}));
-      return { started: true };
+      if (started) {
+        await this.telegramTradeAutomation.start(usersId);
+      }
+      return { started };
     } catch (error) {
-      console.log({ error });
+      console.error('Error starting listening:', error);
       return { started: false };
     }
   }

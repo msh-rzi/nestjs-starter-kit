@@ -7,10 +7,21 @@ import { globalResponse } from 'src/utils/globalResponse';
 
 @Injectable()
 export class BybitService {
-  public client: RestClientV5;
-  constructor(private readonly prisma: PrismaService) {}
+  private clients: Map<string, RestClientV5> = new Map();
 
-  async initClient(userId: string): Promise<GlobalResponseType> {
+  constructor(private readonly prisma: PrismaService) {
+    // !! delete me
+    this.prisma.userExchanges.findMany().then((res) => {
+      console.log({ res });
+      res.forEach(async (u) => {
+        if (u.exchangeId === 'bybit') {
+          await this.initBybitClient(u.userId);
+        }
+      });
+    });
+  }
+
+  async initBybitClient(userId: string): Promise<GlobalResponseType> {
     const user = await this.prisma.userExchanges.findFirst({
       where: { userId, exchangeId: 'bybit' },
     });
@@ -28,7 +39,7 @@ export class BybitService {
       key: user.apiKey,
       secret: user.apiSecret,
     });
-    this.client = client;
+    this.clients.set(userId, client);
     return globalResponse({
       retCode: ResponseCode.ACCEPTED,
       regMsg: ResponseMessage.OK,
@@ -37,7 +48,8 @@ export class BybitService {
     });
   }
 
-  getClient() {
-    return this.client;
+  getClient(userId: string): RestClientV5 | null {
+    console.log(this.clients);
+    return this.clients.get(userId) || null;
   }
 }

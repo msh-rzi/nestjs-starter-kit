@@ -16,7 +16,7 @@ export class TelegramChannelsRepository {
   async channels(userId: string): Promise<GlobalResponseType> {
     try {
       const session = await this.AuthRepo.getUserSession(userId);
-      const client = await this.AuthRepo.initTelegramClient({ session });
+      const client = await this.AuthRepo.initTelegramClient(userId, session);
 
       const dialogs = await client.getDialogs();
 
@@ -65,7 +65,7 @@ export class TelegramChannelsRepository {
   ): Promise<GlobalResponseType> {
     try {
       const session = await this.AuthRepo.getUserSession(userId);
-      const client = await this.AuthRepo.initTelegramClient({ session });
+      const client = await this.AuthRepo.initTelegramClient(userId, session);
 
       const ch = await client.invoke(
         new Api.messages.GetHistory({

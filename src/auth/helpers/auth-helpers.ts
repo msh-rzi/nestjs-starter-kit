@@ -2,10 +2,9 @@ import { ForbiddenException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as argon2 from 'argon2';
+import { ReqType } from 'src/telegram/types/types';
 import { User } from 'src/user/domain/user';
-import { UserEntity } from 'src/user/entities/user.entity';
 import { UserService } from 'src/user/user.service';
-import { JwtPayload } from '../types/types';
 
 @Injectable()
 export class AuthHelpers {
@@ -74,15 +73,21 @@ export class AuthHelpers {
     };
   }
 
-  validateAccessToken(token: string): JwtPayload {
-    return this.jwtService.verify(token, {
+  validateAccessToken(token: string): ReqType {
+    const decodedToken = this.jwtService.verify(token, {
       secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
     });
+    return {
+      user: { userId: decodedToken.sub, email: decodedToken.email },
+    };
   }
-  validateRefreshToken(token: string): JwtPayload {
-    return this.jwtService.verify(token, {
+  validateRefreshToken(token: string): ReqType {
+    const decodedToken = this.jwtService.verify(token, {
       secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
     });
+    return {
+      user: { userId: decodedToken.sub, email: decodedToken.email },
+    };
   }
 
   toUserDomainSafeUser(data: User) {

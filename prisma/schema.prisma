@@ -32,18 +32,31 @@ model Users {
   userExchanges    UserExchanges[]
   UserTelegram     UserTelegram[]
   Algorithm        Algorithm[]
-  Robots           Robots[]
+  UserRobots       UserRobots[]
 }
 
-model Robots {
-  id           Int       @id @default(autoincrement())
-  name         String
+model UserRobots {
+  id           String    @id @default(uuid())
+  active       Boolean   @default(true)
   user         Users     @relation(fields: [usersId], references: [id])
   usersId      String
+  robot        Robots    @relation(fields: [robotsId], references: [id])
+  robotsId     String
   createdAt    DateTime? @default(now())
   startedAt    DateTime? @updatedAt
   canceledAt   DateTime?
   cancelReason String?
+}
+
+model Robots {
+  id          String       @id @default(uuid())
+  name        String
+  description String
+  path        String       @default("")
+  active      Boolean      @default(true)
+  createdAt   DateTime?    @default(now())
+  updatedAt   DateTime?    @updatedAt
+  UserRobots  UserRobots[]
 }
 
 model Exchange {

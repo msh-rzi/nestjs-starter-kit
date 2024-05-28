@@ -35,15 +35,17 @@ export class TelegramController {
   @UseGuards(AuthGuard)
   @Get('init-connection')
   @HttpCode(HttpStatus.OK)
-  async initClient() {
-    return await this.authRepo.initTelegramClient({});
+  async initClient(@Req() req: ReqType) {
+    const userId = req.user.userId;
+    return Boolean(await this.authRepo.initTelegramClient(userId));
   }
 
   @UseGuards(AuthGuard)
   @Post('send-code')
   @HttpCode(HttpStatus.OK)
-  async sendCode(@Body() dto: SendCodeDto) {
-    return await this.authRepo.sendCode(dto.phoneNumber);
+  async sendCode(@Req() req: ReqType, @Body() dto: SendCodeDto) {
+    const userId = req.user.userId;
+    return await this.authRepo.sendCode(userId, dto.phoneNumber);
   }
 
   @UseGuards(AuthGuard)
@@ -57,8 +59,9 @@ export class TelegramController {
   @UseGuards(AuthGuard)
   @Get('check-connection')
   @HttpCode(HttpStatus.OK)
-  async checkConnection() {
-    return this.authRepo.checkConnection();
+  async checkConnection(@Req() req: ReqType) {
+    const userId = req.user.userId;
+    return this.authRepo.checkConnection(userId);
   }
 
   @UseGuards(AuthGuard)

@@ -1,21 +1,21 @@
 import { Injectable } from '@nestjs/common';
-import { RestClientV5 } from 'bybit-api';
 import { BybitService } from '../shared/bybit.service';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { TradeDetails } from 'src/telegram/types/types';
 
 @Injectable()
 export class ExchangeBybitHelper {
-  private client: RestClientV5;
   constructor(
     private readonly bybitService: BybitService,
     private readonly prisma: PrismaService,
-  ) {
-    this.client = this.bybitService.getClient();
-  }
+  ) {}
 
-  async getPositionInfo(category: BybitOrderCategory, symbol: string) {
-    const getPositionInfo = await this.client.getPositionInfo({
+  async getPositionInfo(
+    userId: string,
+    category: BybitOrderCategory,
+    symbol: string,
+  ) {
+    const client = this.bybitService.getClient(userId);
+    const getPositionInfo = await client.getPositionInfo({
       category,
       symbol,
     });
@@ -30,8 +30,13 @@ export class ExchangeBybitHelper {
     });
   }
 
-  async switchPositionMode(category: 'inverse' | 'linear', symbol: string) {
-    const switchHedgeMode = await this.client.switchPositionMode({
+  async switchPositionMode(
+    userId: string,
+    category: 'inverse' | 'linear',
+    symbol: string,
+  ) {
+    const client = this.bybitService.getClient(userId);
+    const switchHedgeMode = await client.switchPositionMode({
       category,
       symbol,
       mode: 0,
@@ -40,11 +45,13 @@ export class ExchangeBybitHelper {
   }
 
   async updateLeverage(
+    userId: string,
     category: 'inverse' | 'linear',
     symbol: string,
     leverage: string,
   ) {
-    const setLeverage = await this.client.setLeverage({
+    const client = this.bybitService.getClient(userId);
+    const setLeverage = await client.setLeverage({
       category,
       symbol,
       buyLeverage: leverage,
@@ -53,15 +60,24 @@ export class ExchangeBybitHelper {
     console.log({ setLeverage });
   }
 
-  async getCoinLastPrice(category: 'inverse' | 'linear', symbol: string) {
-    const tickers = await this.client.getTickers({ category, symbol });
+  async getCoinLastPrice(
+    userId: string,
+    category: 'inverse' | 'linear',
+    symbol: string,
+  ) {
+    const client = this.bybitService.getClient(userId);
+    const tickers = await client.getTickers({ category, symbol });
     return tickers.result.list.at(0).lastPrice;
   }
 
-  async updatePositionConfig(symbol: string, leverage: string) {
+  async updatePositionConfig(userId: string, symbol: string, leverage: string) {
     const category = 'linear';
 
-    const targetCoinPositionInfo = await this.getPositionInfo(category, symbol);
+    const targetCoinPositionInfo = await this.getPositionInfo(
+      userId,
+      category,
+      symbol,
+    );
     if (targetCoinPositionInfo.retCode !== 0) {
       return {
         message: 'error getPositionInfo',
@@ -73,6 +89,7 @@ export class ExchangeBybitHelper {
       targetCoinPositionInfo.result.list.at(0).leverage !== leverage.toString()
     ) {
       const setLeverage = await this.updateLeverage(
+        userId,
         category,
         symbol,
         leverage.toString(),
@@ -81,8 +98,12 @@ export class ExchangeBybitHelper {
     }
 
     // update position mode
-    if (targetCoinPositionInfo.result.list[0].positionIdx !== 0) {
-      const switchHedgeMode = await this.switchPositionMode(category, symbol);
+    if (targetCoinPositionInfo.result.list[0].positionIdx === 0) {
+      const switchHedgeMode = await this.switchPositionMode(
+        userId,
+        category,
+        symbol,
+      );
       console.log({ switchHedgeMode });
     }
   }

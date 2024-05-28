@@ -20,7 +20,7 @@ export class AuthGuard implements CanActivate {
       }
       const authToken = authorization.replace(/bearer/gim, '').trim();
       const resp = this.authHelpers.validateAccessToken(authToken);
-      request.user = resp;
+      request.user = { ...resp.user };
       return true;
     } catch (error) {
       console.log('auth error - ', error.message);

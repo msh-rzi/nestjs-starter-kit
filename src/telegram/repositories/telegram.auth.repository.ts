@@ -3,18 +3,18 @@ import { Injectable } from '@nestjs/common';
 import { globalResponse } from 'src/utils/globalResponse';
 // telegram
 import { StringSession } from 'telegram/sessions';
-import { TelegramClient } from 'telegram';
+import { Api, TelegramClient } from 'telegram';
 // services
 import { TelegramHelpers } from '../helpers/telegram.helpers';
 import { PrismaService } from 'src/prisma/prisma.service';
 // types
 import { ResponseCode, ResponseMessage } from 'src/types/globalEnums';
 import { GlobalResponseType } from 'src/types/globalTypes';
-import { initTelegramClientParams } from '../types/types';
 
 @Injectable()
 export class TelegramAuthRepository {
   public client: TelegramClient;
+  private clients: Map<string, TelegramClient> = new Map();
   public phoneNumber: string;
 
   constructor(
@@ -22,37 +22,75 @@ export class TelegramAuthRepository {
     private readonly prisma: PrismaService,
   ) {}
 
-  checkConnection() {
-    return globalResponse({
-      retCode: ResponseCode.OK,
-      regMsg: ResponseMessage.OK,
-      result: { isConnect: this.client.connected },
-      retExtInfo: '',
-    });
+  async checkConnection(userId: string) {
+    const userSession = await this.getUserSession(userId);
+    if (!userSession) {
+      return globalResponse({
+        retCode: ResponseCode.OK,
+        regMsg: ResponseMessage.OK,
+        result: { isConnect: false },
+        retExtInfo: '',
+      });
+    } else {
+      await this.initTelegramClient(userId, userSession);
+      return globalResponse({
+        retCode: ResponseCode.OK,
+        regMsg: ResponseMessage.OK,
+        result: { isConnect: true },
+        retExtInfo: '',
+      });
+    }
   }
-
-  async initTelegramClient({
-    session,
-  }: initTelegramClientParams): Promise<TelegramClient> {
-    const isUserConnected = this.checkConnection();
-    if (isUserConnected.result.isConnect) return this.client;
-
-    const stringSession = new StringSession(session || '');
-    const { apiHash, apiId } = this.helpers.getApiCredentials();
-    const client = new TelegramClient(stringSession, apiId, apiHash, {
-      testServers: true,
-      connectionRetries: 5,
-      retryDelay: 1000,
-    });
-    this.client = client;
-    await client.connect();
-
-    return client;
-  }
-
-  async sendCode(phoneNumber?: string): Promise<GlobalResponseType> {
+  async initTelegramClient(
+    userId: string,
+    session?: string,
+  ): Promise<TelegramClient> {
     try {
-      const client = await this.initTelegramClient({});
+      console.log(`Initializing Telegram Client for user: ${userId}`);
+      let client = this.clients.get(userId);
+
+      if (client) {
+        return new Promise((res) => {
+          res(client);
+        });
+      }
+
+      const stringSession = new StringSession(session || '');
+      console.log('String session initialized:');
+
+      const { apiHash, apiId } = this.helpers.getApiCredentials();
+      console.log('API credentials retrieved:');
+
+      client = new TelegramClient(stringSession, apiId, apiHash, {
+        testServers: true,
+        connectionRetries: 5,
+        retryDelay: 1000,
+      });
+      console.log('Telegram client created');
+
+      const connected = await client.connect();
+      this.clients.set(userId, client);
+      console.log('Client connection status:', connected);
+
+      console.log('--------------------');
+      console.log({ clients: this.clients });
+      return client;
+    } catch (error) {
+      console.error(
+        `Error initializing Telegram client for user ${userId}:`,
+        error,
+      );
+      throw error;
+    }
+  }
+
+  async sendCode(
+    userId: string,
+    phoneNumber: string,
+  ): Promise<GlobalResponseType> {
+    try {
+      // const client = this.client;
+      const client = await this.initTelegramClient(userId);
 
       const { apiHash, apiId } = this.helpers.getApiCredentials();
       const phone = phoneNumber;
@@ -79,7 +117,8 @@ export class TelegramAuthRepository {
 
   async signIn(phoneCode: string, userId: string) {
     const { apiHash, apiId } = this.helpers.getApiCredentials();
-    const telegramUserInfo = await this.client.signInUser(
+    const client = this.clients.get(userId);
+    const telegramUserInfo = await client.signInUser(
       { apiId, apiHash },
       {
         phoneNumber: this.phoneNumber,
@@ -90,7 +129,7 @@ export class TelegramAuthRepository {
       },
     );
 
-    console.log(telegramUserInfo);
+    // console.log(telegramUserInfo);
     // If sign-in is successful, access user information
     if (telegramUserInfo) {
       // Access username
@@ -98,17 +137,19 @@ export class TelegramAuthRepository {
       console.log('Username:', username);
 
       // Download user profile photo
-      const profilePhotoBuffer = await this.client.downloadProfilePhoto(
+      const profilePhotoBuffer = await client.downloadProfilePhoto(
         telegramUserInfo.id,
       );
       const profilePhoto = Buffer.from(profilePhotoBuffer).toString('base64');
-      const session = JSON.parse(JSON.stringify(this.client.session.save()));
-      console.log({ session });
+      const session = JSON.parse(JSON.stringify(client.session.save()));
+      client.session.delete();
+      // console.log({ session });
 
       // !! Save User to UserTelegram
       const user = await this.prisma.userTelegram.findFirst({
         where: { usersId: userId },
       });
+
       if (user) {
         await this.prisma.userTelegram.update({
           where: { id: user.id },
@@ -121,7 +162,7 @@ export class TelegramAuthRepository {
             profilePhoto,
             session,
             username,
-            usersId: userId,
+            user: { connect: { id: userId } },
           },
         });
       }
@@ -164,7 +205,7 @@ export class TelegramAuthRepository {
   async getMe(userId: string) {
     try {
       const session = await this.getUserSession(userId);
-      const client = await this.initTelegramClient({ session });
+      const client = await this.initTelegramClient(userId, session);
       const me = await client.getMe();
       //   await this.startListening(userId);
       const profilePhotoBuffer = await client.downloadProfilePhoto(me.id);

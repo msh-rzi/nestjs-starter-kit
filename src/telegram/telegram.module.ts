@@ -8,9 +8,18 @@ import { PrismaModule } from 'src/prisma/prisma.module';
 import { TelegramHelpers } from './helpers/telegram.helpers';
 import { AiModule } from 'src/ai/ai.module';
 import { AuthModule } from 'src/auth/auth.module';
+import { AlgorithmModule } from 'src/algorithm/algorithm.module';
+import { RobotModule } from 'src/robot/robot.module';
 
 @Module({
-  imports: [ExchangeModule, PrismaModule, AiModule, AuthModule],
+  imports: [
+    ExchangeModule,
+    PrismaModule,
+    AiModule,
+    AuthModule,
+    AlgorithmModule,
+    RobotModule,
+  ],
   controllers: [TelegramController],
   providers: [
     TelegramEventRepository,

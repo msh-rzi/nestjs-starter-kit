@@ -2,9 +2,6 @@ export type GetApiCredentialsData = {
   apiId: number;
   apiHash: string;
 };
-export type initTelegramClientParams = {
-  session?: string;
-};
 
 export class TradeDetails {
   Symbol: string;
@@ -16,4 +13,4 @@ export class TradeDetails {
   StopLoss: number | null;
 }
 
-export type ReqType = { user: { userId: string } };
+export type ReqType = { user: { userId: string; email: string } };

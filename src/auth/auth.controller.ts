@@ -14,7 +14,7 @@ import { AuthService } from './auth.service';
 import { ApiTags } from '@nestjs/swagger';
 import { RegisterByEmailDto, LoginByEmailDto } from './dto';
 import { AuthGuard } from './guard/auth.guard';
-import { JwtPayload } from './types/types';
+import { ReqType } from 'src/telegram/types/types';
 
 @ApiTags('Auth By Email')
 @Controller({
@@ -41,24 +41,22 @@ export class AuthController {
 
   @UseGuards(AuthGuard)
   @Get('logout')
-  logout(@Req() req: any) {
-    this.authService.logout(req.user['sub']);
+  logout(@Req() req: ReqType) {
+    this.authService.logout(req.user.userId);
   }
 
   @UseGuards(AuthGuard)
   @Get('refresh')
-  refreshTokens(@Req() req: any) {
-    const userId = req.user['sub'];
+  refreshTokens(@Req() req: ReqType) {
+    const userId = req.user.userId;
     const refreshToken = req.user['refreshToken'];
     return this.authHelpers.refreshTokens(userId, refreshToken);
   }
 
   @UseGuards(AuthGuard)
   @Get('me')
-  async getMe(@Request() request: { user: JwtPayload }) {
-    console.log({ request: request.user });
-    return {
-      userData: await this.authService.me(request.user.email),
-    };
+  async getMe(@Request() req: ReqType) {
+    console.log({ request: req.user });
+    return await this.authService.me(req.user.email);
   }
 }

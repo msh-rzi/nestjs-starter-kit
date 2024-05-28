@@ -3,6 +3,8 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { AddAlgorithmDto } from './dto/add-algorithm-dto';
 import { globalResponse } from 'src/utils/globalResponse';
 import { ResponseCode, ResponseMessage } from 'src/types/globalEnums';
+import { GlobalResponseType } from 'src/types/globalTypes';
+import { Algorithm } from '@prisma/client';
 
 @Injectable()
 export class AlgorithmService {
@@ -32,7 +34,11 @@ export class AlgorithmService {
     }
   }
 
-  async getUserAlgorithms(usersId: string) {
+  async getUserAlgorithms(
+    usersId: string,
+  ): Promise<
+    GlobalResponseType<{ userAlgorithms?: Algorithm[]; error?: any }>
+  > {
     try {
       const userAlgorithms = await this.prisma.algorithm.findMany({
         where: { usersId },
@@ -54,7 +60,12 @@ export class AlgorithmService {
     }
   }
 
-  async getUserAlgorithmsByExchangeId(usersId: string, exchangeId: string) {
+  async getUserAlgorithmsByExchangeId(
+    usersId: string,
+    exchangeId: string,
+  ): Promise<
+    GlobalResponseType<{ userAlgorithms?: Algorithm[]; error?: any }>
+  > {
     try {
       const userAlgorithms = await this.prisma.algorithm.findMany({
         where: {

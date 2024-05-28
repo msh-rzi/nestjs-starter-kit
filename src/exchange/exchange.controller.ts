@@ -11,10 +11,11 @@ import {
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from 'src/auth/guard/auth.guard';
-import { TradeDetails } from 'src/telegram/types/types';
+import { ReqType, TradeDetails } from 'src/telegram/types/types';
 import { GlobalResponseType } from 'src/types/globalTypes';
 import { AddExchangeDto } from './dto/add-exchange.dto';
 import { ExchangeBaseRepository } from './repositories/exchange.base.repository';
+import { AddUserExchangeDto } from './dto/add-user-exchange.dto';
 import { ExchangeBybitRepository } from './repositories/exchange.bybit.repository';
 
 @ApiTags('Exchanges')
@@ -25,11 +26,11 @@ import { ExchangeBybitRepository } from './repositories/exchange.bybit.repositor
 export class ExchangeController {
   constructor(
     private readonly exchangeBaseService: ExchangeBaseRepository,
-    private readonly exchangeBybitService: ExchangeBybitRepository,
+    private readonly bybitRepo: ExchangeBybitRepository,
   ) {}
 
   @UseGuards(AuthGuard)
-  @Post('add')
+  @Post('add-exchange')
   @HttpCode(HttpStatus.CREATED)
   async addExchange(
     @Body() addExchangeDto: AddExchangeDto,
@@ -38,31 +39,22 @@ export class ExchangeController {
   }
 
   @UseGuards(AuthGuard)
-  @Get(':id')
-  @HttpCode(HttpStatus.OK)
-  async getExchangeById(@Param('id') id: string): Promise<GlobalResponseType> {
-    return this.exchangeBaseService.getExchangeById(id);
-  }
-
-  @UseGuards(AuthGuard)
-  @Get()
+  @Get('all-exchanges')
   @HttpCode(HttpStatus.OK)
   async getAllExchanges(): Promise<GlobalResponseType> {
-    return this.exchangeBaseService.getAllExchanges();
+    console.log('first');
+    return await this.exchangeBaseService.getAllExchanges();
   }
 
   @UseGuards(AuthGuard)
-  @Post('user/:userId')
+  @Post('add-user-exchange')
   @HttpCode(HttpStatus.CREATED)
   async addUserExchange(
-    @Param('userId') userId: string,
+    @Req() req: ReqType,
     @Body()
-    {
-      apiKey,
-      apiSecret,
-      exchangeId,
-    }: { apiKey: string; apiSecret: string; exchangeId: string },
+    { apiKey, apiSecret, exchangeId }: AddUserExchangeDto,
   ): Promise<GlobalResponseType> {
+    const userId = req.user.userId;
     return this.exchangeBaseService.addUserExchange(
       userId,
       apiKey,
@@ -72,42 +64,43 @@ export class ExchangeController {
   }
 
   @UseGuards(AuthGuard)
-  @Get('user/:userId')
+  @Get('user-exchanges')
   @HttpCode(HttpStatus.OK)
-  async getUserExchanges(
-    @Param('userId') userId: string,
-  ): Promise<GlobalResponseType> {
+  async getUserExchanges(@Req() req: ReqType): Promise<GlobalResponseType> {
+    const userId = req.user.userId;
     return this.exchangeBaseService.userExchange(userId);
   }
 
   @UseGuards(AuthGuard)
-  @Get('bybit/balance')
+  @Post('bybit-balance')
   @HttpCode(HttpStatus.OK)
-  async getBybitBalance(@Req() req: any): Promise<GlobalResponseType> {
-    const { specificCoin } = req.query;
-    return this.exchangeBybitService.getAccountBalance(specificCoin);
+  async getAccountBalance(
+    @Req() req: ReqType,
+    @Body() dto: { specificCoin?: string },
+  ) {
+    const userId = req.user.userId;
+    return this.bybitRepo.getAccountBalance(userId, dto.specificCoin);
   }
 
   @UseGuards(AuthGuard)
-  @Get('bybit/orders')
+  @Post('bybit-active-orders')
   @HttpCode(HttpStatus.OK)
-  async getBybitActiveOrders(@Req() req: any): Promise<GlobalResponseType> {
-    const { settleCoin } = req.query;
-    return this.exchangeBybitService.getActiveOrders(settleCoin);
+  async getActiveOrders(
+    @Req() req: ReqType,
+    @Body() dto: { settleCoin?: string },
+  ) {
+    const userId = req.user.userId;
+    return this.bybitRepo.getActiveOrders(userId, dto.settleCoin);
   }
 
   @UseGuards(AuthGuard)
-  @Post('bybit/order')
-  @HttpCode(HttpStatus.CREATED)
-  async createBybitOrder(
-    @Body() tradeDetails: TradeDetails,
-    @Req() req: any,
-  ): Promise<void> {
-    const { userId, exchangeId } = req.body;
-    await this.exchangeBybitService.createOrder(
-      userId,
-      exchangeId,
-      tradeDetails,
-    );
+  @Post('bybit-create-order')
+  @HttpCode(HttpStatus.OK)
+  async createOrder(
+    @Req() req: ReqType,
+    @Body() dto: { exchangeId?: string; data: TradeDetails },
+  ) {
+    const userId = req.user.userId;
+    return this.bybitRepo.createOrder(userId, dto.exchangeId, dto.data);
   }
 }
