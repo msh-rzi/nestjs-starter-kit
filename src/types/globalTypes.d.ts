@@ -7,3 +7,4 @@ export type GlobalResponseType<T = any> = {
   retExtInfo: string;
   time?: number;
 };
+export type ReqType = { user: { userId: string; email: string } };

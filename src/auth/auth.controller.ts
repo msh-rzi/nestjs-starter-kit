@@ -14,7 +14,7 @@ import { AuthService } from './auth.service';
 import { ApiTags } from '@nestjs/swagger';
 import { RegisterByEmailDto, LoginByEmailDto } from './dto';
 import { AuthGuard } from './guard/auth.guard';
-import { ReqType } from 'src/telegram/types/types';
+import { ReqType } from 'src/types/globalTypes';
 
 @ApiTags('Auth By Email')
 @Controller({

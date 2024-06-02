@@ -14,8 +14,8 @@ datasource db {
 }
 
 model Users {
-  id               String          @id @default(uuid())
-  email            String          @unique
+  id               String    @id @default(uuid())
+  email            String    @unique
   password         String?
   previousPassword String?
   provider         String?
@@ -25,87 +25,8 @@ model Users {
   photo            String?
   role             String?
   status           String?
-  createdAt        DateTime?       @default(now())
-  updatedAt        DateTime?       @updatedAt
+  createdAt        DateTime? @default(now())
+  updatedAt        DateTime? @updatedAt
   deletedAt        DateTime?
   refreshToken     String?
-  userExchanges    UserExchanges[]
-  UserTelegram     UserTelegram[]
-  Algorithm        Algorithm[]
-  UserRobots       UserRobots[]
-}
-
-model UserRobots {
-  id           String    @id @default(uuid())
-  active       Boolean   @default(true)
-  user         Users     @relation(fields: [usersId], references: [id])
-  usersId      String
-  robot        Robots    @relation(fields: [robotsId], references: [id])
-  robotsId     String
-  createdAt    DateTime? @default(now())
-  startedAt    DateTime? @updatedAt
-  canceledAt   DateTime?
-  cancelReason String?
-}
-
-model Robots {
-  id          String       @id @default(uuid())
-  name        String
-  description String
-  path        String       @default("")
-  active      Boolean      @default(true)
-  createdAt   DateTime?    @default(now())
-  updatedAt   DateTime?    @updatedAt
-  UserRobots  UserRobots[]
-}
-
-model Exchange {
-  id               String          @id
-  name             String
-  year_established Int
-  country          String?
-  description      String?
-  image            String
-  userExchanges    UserExchanges[]
-  Algorithm        Algorithm[]
-}
-
-model UserExchanges {
-  id         Int       @id @default(autoincrement())
-  name       String
-  user       Users     @relation(fields: [userId], references: [id])
-  userId     String
-  exchange   Exchange  @relation(fields: [exchangeId], references: [id])
-  exchangeId String
-  apiKey     String
-  apiSecret  String
-  createdAt  DateTime? @default(now())
-  updatedAt  DateTime? @updatedAt
-}
-
-model Algorithm {
-  id             Int       @id @default(autoincrement())
-  algorithmName  String
-  user           Users     @relation(fields: [usersId], references: [id])
-  usersId        String
-  exchange       Exchange  @relation(fields: [exchangeId], references: [id])
-  exchangeId     String
-  algorithm      String
-  channelId      String
-  purchaseVolume String
-  purchaseType   String
-  createdAt      DateTime? @default(now())
-  updatedAt      DateTime? @updatedAt
-}
-
-model UserTelegram {
-  id           Int       @id @default(autoincrement())
-  telegramId   BigInt
-  username     String?
-  profilePhoto String?
-  session      String    @default("")
-  user         Users     @relation(fields: [usersId], references: [id])
-  usersId      String
-  createdAt    DateTime? @default(now())
-  updatedAt    DateTime? @updatedAt
 }

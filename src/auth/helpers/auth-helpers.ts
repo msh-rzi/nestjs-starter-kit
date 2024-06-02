@@ -2,7 +2,7 @@ import { ForbiddenException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as argon2 from 'argon2';
-import { ReqType } from 'src/telegram/types/types';
+import { ReqType } from 'src/types/globalTypes';
 import { User } from 'src/user/domain/user';
 import { UserService } from 'src/user/user.service';
 
